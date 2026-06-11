@@ -1,116 +1,127 @@
-Marketing and Sales data evaluation
+NBA Player Longevity Prediction
+
+Feature Engineering Project — NBA Players Dataset
 
 Project Overview:
-
-This project investigates the impact of advertising expenditures on sales using Multiple Linear Regression. The objective is to identify which marketing channels contribute most significantly to sales performance and provide data-driven recommendations for budget allocation.
+This project analyses an NBA player performance dataset (1,340 players, 21 features)
+using Python and pandas to engineer a clean, model-ready feature set for predicting
+whether a player will remain active in the NBA for at least 5 years ( target_5yrs ).
+The pipeline covers target variable definition, removal of non-predictive columns,
+correlation analysis to resolve multicollinearity, creation of meaningful composite metrics,
+missing value handling, and full documentation of every feature engineering decision.
 
 Dataset:
+Property Value
+Source nba-players.csv
+Rows 1,340 players
+Original Features 21 (after dropping index/name)
+Target Variable target_5yrs (1 = played 5+ years, 0 = did not)
+Class Balance 62.0% career ≥5 yrs, 38.0% career <5 yrs
+Missing Values None
 
-The dataset contains 4,572 observations with the following variables:
+Core Project Goals:
+1. Define the target variable target_5yrs as the dependent variable for modelling
+2. Drop non-predictive columns ( name , index) that add noise or risk data leakage
+3. Perform correlation analysis to identify and resolve multicollinearity among predictors
+4. Engineer at least one composite feature that captures player efficiency or impact
+5. Handle missing values appropriately to ensure ML-readiness without introducing bias
+6. Document all feature engineering decisions with clear Markdown rationale
+7. 
+Tools & Libraries
+Tool and Purpose
+Python 3 Core language
+pandas Data loading, cleaning, transformation
+NumPy Numerical operations, correlation matrix
+Matplotlib Data visualisation
+Seaborn Correlation heatmap
+Jupyter Notebook Interactive analysis environment
 
-TV Advertising Spend
-Radio Advertising Spend
-Social Media Advertising Spend
-Sales (Target Variable)
-After data cleaning and removal of missing values, 4,546 observations were used for model training and analysis.
+Feature Engineering Workflow:
+1. Load & Inspect Dataset
+Loaded nba-players.csv and confirmed 1,340 rows, 22 columns, zero null values
+Identified target_5yrs as the binary classification target
+2. Drop Non-Predictive Columns
+Removed:
+Unnamed: 0 — row index with no predictive value
+name — player identifier; inclusion would cause data leakage and model overfitting
+3. Correlation Analysis & Multicollinearity Reduction
+A correlation matrix was computed on all numeric features. Pairs with correlation > 0.85
+were flagged as redundant. Key findings:
 
-Technologies Used:
+Feature Pair and Correlation
+fgm ↔ pts 0.991
+fga ↔ fgm 0.980
+fga ↔ pts 0.980
+3pa ↔ 3p_made 0.983
+ftm ↔ fta 0.981
+dreb ↔ reb 0.978
+oreb ↔ reb 0.933
+min ↔ pts 0.912
 
-Python
-Pandas
-NumPy
-Matplotlib
-Seaborn
-Statsmodels
-SciPy
+Decision: Dropped redundant volume stats ( fga , fgm , fta , ftm , 3pa , oreb , dreb ) and
+retained percentage-based or summary features ( fg , ft , 3p , pts , reb ) to eliminate
+multicollinearity while preserving information.
 
-Installation:
-Clone the repository:
+5. Composite Feature Engineering
+Three new features were created to capture player efficiency in ways raw statistics cannot:
+New Feature Formula Rationale
+pts_per_min pts / min Measures scoring efficiency — removes
+volume bias from high-minute players
+efficiency_rating
+pts + reb + ast +
+stl + blk − tov
+Composite all-round impact metric widely
+used in basketball analytics
+ast_tov_ratio ast / tov Decision-making quality — high assists
+with low turnovers signals durability
 
-git clone https://github.com/elizabethdanladi/marketing_and_sales_data_evaluate_lr
+7. Missing Value Handling:
+No null values existed in the raw dataset
+After feature creation, rows where min = 0 (zero minutes played) were handled with
+np.nan replacement to avoid division-by-zero in pts_per_min and ast_tov_ratio ,
+followed by median imputation to prevent bias.
 
-Analysis Workflow:
+Key Findings:
+Top Predictors of 5-Year Career Longevity (Correlation with target_5yrs )
+Rank and Feature and Correlation
+1 gp (games played) +0.397
+2 efficiency_rating (engineered) +0.339
+3 min (minutes per game) +0.318
+4 fgm +0.318
+5 pts +0.316
+6 reb +0.299
+7 ftm +0.297
 
-Data Inspection and Cleaning
-Missing Value Treatment
-Exploratory Data Analysis (EDA)
-Correlation Analysis
-Multiple Linear Regression (OLS)
-Model Diagnostics
-ROI Analysis
-Marketing Budget Recommendations
-Correlation Analysis
+Notable: The engineered efficiency_rating feature ranks 2nd overall among all
+predictors — demonstrating that composite metrics can outperform individual raw stats for
+longevity prediction.
 
-Correlation with Sales:
+Weakest Predictors (candidates for removal)
+3p (three-point percentage): correlation ≈ 0.000
+3pa (three-point attempts): correlation ≈ +0.018
+ast_tov_ratio : correlation ≈ −0.013
+These features contribute minimal signal and were flagged for removal in the final modelready dataset.
 
-Variable and	Correlation
-TV	0.9995
-Radio	0.8686
-Social Media	0.5274
+Final Model-Ready Dataset
+After the full pipeline the clean dataset retains:
+Dropped: Unnamed: 0 , name , fga , fgm , fta , ftm , 3pa , oreb , dreb
+Retained: gp , min , pts , fg , 3p_made , 3p , ft , reb , ast , stl , blk , tov
+Added: pts_per_min , efficiency_rating , ast_tov_ratio
+Target: target_5yrs.
 
-Key Insight:
+Limitations & Next Steps
+The dataset does not include positional data — position (guard vs centre) likely
+influences longevity and should be encoded in future iterations
+efficiency_rating is highly correlated with pts (0.968) and min (0.945); for linear
+models, one of the two should be dropped to avoid introducing new multicollinearity
+With a larger dataset, recursive feature elimination (RFE) with cross-validation would
+provide a more rigorous feature selection method
+Next step: feed the cleaned feature set into a classification model (Logistic Regression,
+Random Forest) to validate predictive power.
 
-TV advertising showed the strongest relationship with sales, exhibiting an almost perfect positive correlation (r = 0.9995).
-
-Regression Model
-
-The fitted regression equation is:
-
-Sales = -0.134 + 3.563(TV) - 0.004(Radio) + 0.005(Social_Media)
-
-Model Performance
-
-Metric	Value
-R²	0.9990
-Adjusted R²	0.9990
-F-Statistic	1,504,986.33
-Observations	4,546
-AIC	22,740.25
-BIC	22,765.93
-Interpretation
-
-The model explains approximately 99.9% of the variation in sales, indicating an exceptionally strong fit.
-
-Coefficient Results
-
-Variable	Coefficient	p-value	Significant?
-Intercept	-0.1340	0.1927	No
-TV	3.5626	< 0.001	Yes
-Radio	-0.0040	0.6848	No
-Social Media	0.0050	0.8419	No
-Interpretation
-
-A one-unit increase in TV advertising is associated with an average increase of 3.56 units in sales, holding other variables constant.
-Radio advertising did not have a statistically significant effect on sales.
-Social Media advertising did not have a statistically significant effect on sales.
-ROI Analysis
-
-Estimated increase in sales per $100 invested:
-
-Channel	Sales Increase
-TV	$356.26
-Social Media	$0.50
-Radio	-$0.40
-ROI Ranking
-
-TV Advertising
-Social Media Advertising
-Radio Advertising
-Business Recommendations
-
-Based on the analysis:
-
-Allocate 60–70% of the marketing budget to TV advertising.
-Allocate 20–30% to Social Media advertising as a supporting channel.
-Reserve approximately 10% for experimentation, testing, and optimization.
-Retrain the model periodically to account for changing market conditions.
-Example Business Impact
-
-For every $10,000 increase in TV advertising spend, the model predicts:
-
-Expected sales increase: $35,626
-Approximate Return on Ad Spend (ROAS): 356.3%
-
-Conclusion
-
-The analysis demonstrates that TV advertising is the dominant driver of sales performance in this dataset. With a coefficient of 3.56, a statistically significant p-value (< 0.001), and the highest ROI among all channels, TV advertising should receive the largest share of future marketing investments. The model achieved an R² of 0.999, indicating excellent predictive capability.
+Repository Structure
+- nba_feature_engineering.ipynb # Main analysis notebook (all cells executed)
+- nba-players.csv # Dataset
+- README.md # This file
+  
+Project submitted by Elizabeth Danladi Sabatu as part of the Feature Engineering Mini Project — DH Foundation AI/ML COHORT 4
